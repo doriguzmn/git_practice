@@ -1,0 +1,66 @@
+from typing import List
+
+
+from rich import print
+import pingouin as pg
+import pandas as pd
+from nltk import agreement
+from sklearn.metrics import cohen_kappa_score
+
+
+# Cohen’s Kappa
+def c_kappa(df, selected: List):
+    df = df[selected]
+    return cohen_kappa_score(df.iloc[:, 0].tolist(), df.iloc[:, 1].tolist())
+
+
+def format_codes(df):
+    """
+    format_codes format the dataframe to nltk format
+
+    Args:
+        df (Dataframe): annotated data
+
+    Returns:
+        tuple: formatted codes
+    """
+    formatted_codes = []
+    for idx, (name, values) in enumerate(df.iteritems()):
+        formatted_codes.extend(
+            [[idx, i, values.tolist()[i]] for i in range((len(values.tolist())))]
+        )
+    return tuple(formatted_codes)
+
+
+# Fleiss’s Kappa
+def f_kappa(df):
+    formatted_codes = format_codes(df)
+    ratingtask = agreement.AnnotationTask(data=formatted_codes)
+    return ratingtask.multi_kappa()
+
+
+# Cronbach’s Alpha: Cronbach’s alpha is mostly used to measure the internal consistency of a survey or questionnaire.
+def cronbach_alpha(df):
+    return pg.cronbach_alpha(data=df)
+
+
+# Krippendorff's Alpha & Scott’s Pi
+def k_alpha(df):
+    formatted_codes = format_codes(df)
+    ratingtask = agreement.AnnotationTask(data=formatted_codes)
+    return ratingtask.alpha()
+
+
+def s_pi(df):
+    formatted_codes = format_codes(df)
+    ratingtask = agreement.AnnotationTask(data=formatted_codes)
+    return ratingtask.pi()
+
+
+if __name__ == "__main__":
+    df = pd.read_csv("/Users/Dori/data.csv", index_col=False)
+    print("Cohen's Kappa: ", c_kappa(df, ["AA", "YR"]))
+    print("Fleiss’s Kappa: ", f_kappa(df))
+    print("Cronbach’s Alpha: ", cronbach_alpha(df))
+    print("Krippendorff's Alpha:", k_alpha(df))
+    print("Scott’s Pi: ", s_pi(df))
